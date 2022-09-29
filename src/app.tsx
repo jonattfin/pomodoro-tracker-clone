@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import { Box, Grid, Stack } from "@mui/material";
 import { useMachine } from "@xstate/react";
+import _ from "lodash";
 import { useState } from "react";
 import { Timer } from "./timer";
 import { timerMachine } from "./timer/timer.machine";
@@ -16,6 +17,15 @@ export default function App() {
     send("SELECT");
   };
 
+  const canBeSelected = _.every(
+    [
+      current.matches("started"),
+      current.matches("paused"),
+      current.matches("completed"),
+    ],
+    (x) => !x
+  );
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Grid container spacing={2}>
@@ -23,7 +33,7 @@ export default function App() {
         <Grid item xs={4}>
           <Timer {...{ text, current, send }} />
           <Separator />
-          <TodosContainer {...{ onTodoSelected }} />
+          <TodosContainer {...{ onTodoSelected, canBeSelected }} />
         </Grid>
         <Grid item xs={4}></Grid>
       </Grid>

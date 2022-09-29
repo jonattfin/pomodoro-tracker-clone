@@ -33,16 +33,30 @@ export type TodosProps = {
   onDelete: (guid: string) => void;
 };
 
-export function TodosContainer({ onTodoSelected }: { onTodoSelected:  any }) {
+export type TodosContainerProps = {
+  onTodoSelected: any;
+  canBeSelected: boolean;
+};
+
+export function TodosContainer({
+  onTodoSelected,
+  canBeSelected,
+}: TodosContainerProps) {
   const [text, setText] = useState("");
   const [todosState, todosDispatch] = useReducer(reducer, initialState);
 
   function onSelected(todoGuid: string) {
+    if (!canBeSelected) {
+      return;
+    }
+
     todosDispatch({
       type: ActionTypeValue.SetSelectedTodoGuid,
       payload: todoGuid,
     });
-    onTodoSelected(todosState.todos.find(x => x.guid == todoGuid));
+
+    const selectedTodo = todosState.todos.find((x) => x.guid == todoGuid);
+    onTodoSelected(selectedTodo);
   }
 
   const onChange = (text: string) => {
