@@ -1,15 +1,16 @@
 import styled from "@emotion/styled";
 import { Button, Stack } from "@mui/material";
-import { useMachine } from "@xstate/react";
 import _ from "lodash";
-import { useEffect, useState } from "react";
-import { timerMachine } from "./timer.machine";
+import { useEffect } from "react";
 
-export default function App() {
-  const [current, send] = useMachine(timerMachine);
+export interface TimerProps {
+  text: string;
+  current: any;
+  send: any;
+}
+
+export default function Timer({ text, current, send }: TimerProps) {
   const machine = parseMachineStates(current);
-
-  const [seconds, setSeconds] = useState(30 * 60);
 
   useEffect(() => {
     if (!machine.isStarted) {
@@ -17,16 +18,18 @@ export default function App() {
     }
 
     const interval = setInterval(() => {
-      setSeconds((prevSeconds) => prevSeconds - 1);
-    }, 1000);
+      send("COUNT_SECONDS");
+    }, 100);
     return () => clearInterval(interval);
   }, [machine.isStarted]);
 
+  const { seconds } = current.context;
   const time = calculateRemainingTime(seconds);
 
   return (
     <MainContainer>
       <MainTitle>{`${time.minutes} : ${time.seconds}`}</MainTitle>
+      <TextTitle>{text || "N/A"}</TextTitle>
       <Stack
         direction="row"
         spacing={2}
@@ -39,6 +42,7 @@ export default function App() {
             onClick={() => {
               send("SELECT");
             }}
+            disabled={!text}
           >
             Select
           </Button>
@@ -52,14 +56,6 @@ export default function App() {
               }}
             >
               Start
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                send("COMPLETE");
-              }}
-            >
-              Complete
             </Button>
           </>
         )}
@@ -103,27 +99,37 @@ export default function App() {
             </Button>
           </>
         )}
-        {machine.isComplete && "Is Completed!"}
+        {machine.isComplete && (
+          <Button
+            variant="contained"
+            onClick={() => {
+              send("RESTART");
+            }}
+          >
+            Restart
+          </Button>
+        )}
       </Stack>
     </MainContainer>
   );
 }
 
 const MainTitle = styled.div`
-  font-size: 8em;
+  font-size: 4em;
+  text-align: center;
 `;
 
-const MainTask = styled.div`
-  font-size: 2em;
+const TextTitle = styled.div`
+  font-size: 1em;
   text-align: center;
-  color: black;
-  padding-bottom: 25px;
+  color: blue;
+  /* margin: 20px; */
 `;
 
 const MainContainer = styled.div`
   background-color: brown;
   opacity: 0.9;
-  height: 30vh;
+  height: 20vh;
   padding: 75px 150px;
 `;
 
@@ -144,7 +150,7 @@ function calculateRemainingTime(seconds: number) {
   const remainingSeconds = Math.floor(seconds % 60);
 
   return {
-    minutes: _.pad(remainingMinutes.toString(), 2, "0"),
-    seconds: _.pad(remainingSeconds.toString(), 2, "0"),
+    minutes: _.padStart(remainingMinutes.toString(), 2, "0"),
+    seconds: _.padStart(remainingSeconds.toString(), 2, "0"),
   };
 }
